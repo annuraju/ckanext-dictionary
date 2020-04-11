@@ -55,6 +55,22 @@ class BaseDDController(BaseController):
                 log.info("get_data_dict_table: Found existing data_dictionary DataStore. alias_of: {0}".format(resource_id))
                 return resource_id
         return None
+    
+    def update_schema_field(self, context, package_id, schema):
+        """Update the value of the _schema field the given package."""
+        package = get_action('package_show')(context, {"id": package_id})
+
+        key_found = False
+        for e in package['extras']:
+            if e['key'] == '_schema':
+                e['value'] = json.dumps({"fields": schema})
+                key_found = True
+                break
+
+        if not key_found:
+            e['extras'].append({'key': '_schema', 'value': json.dumps({"fields": schema})})
+
+        get_action('package_patch')(context, {"id": package_id, "extras": package['extras']})
 
     def get_data_dictionary_records(self, package_id, resource_id):
         """Get the data dictionary records from the database."""
